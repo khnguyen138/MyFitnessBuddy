@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model foods {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id          String?
+  source           String?
+  external_id      String?
+  label            String?        @default("")
+  brand            String?
+  serving_unit     String?
+  serving_quantity Decimal?       @db.Decimal
+  kcal             Decimal?       @db.Decimal
+  protein_g        Decimal?       @db.Decimal
+  carbs_g          Decimal?       @db.Decimal
+  fat_g            Decimal?       @db.Decimal
+  created_at       DateTime?      @default(now()) @db.Timestamptz(6)
+  meal_entries     meal_entries[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model goals {
+  user_id       String    @id
+  calorie_goal  Int?
+  water_goal_ml Int?
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime? @default(now()) @db.Timestamptz(6)
+  profiles      profiles  @relation(fields: [user_id], references: [user_id], onDelete: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model meal_entries {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id          String
+  local_date       DateTime @db.Date
+  meal             String
+  food_id          String?  @db.Uuid
+  label_snapshot   String
+  serving_quantity Decimal  @db.Decimal
+  serving_unit     String?
+  kcal             Decimal  @db.Decimal
+  protein_g        Decimal? @db.Decimal
+  carbs_g          Decimal? @db.Decimal
+  fat_g            Decimal? @db.Decimal
+  logged_at        DateTime @default(now()) @db.Timestamptz(6)
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime @default(now()) @db.Timestamptz(6)
+  foods            foods?   @relation(fields: [food_id], references: [id], onUpdate: NoAction, map: "meal_entries_food_fk")
+  profiles         profiles @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "meal_entries_user_fk")
+
+  @@index([user_id, local_date], map: "idx_meal_entries_user_date")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model profiles {
+  user_id       String          @id
+  display_name  String?
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime?       @default(now()) @db.Timestamptz(6)
+  goals         goals?
+  meal_entries  meal_entries[]
+  streaks       streaks?
+  water_entries water_entries[]
+  workouts      workouts[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model streaks {
+  user_id            String    @id
+  current_streak     Int       @default(0)
+  best_streak        Int       @default(0)
+  last_credited_date DateTime? @db.Date
+  updated_at         DateTime  @default(now()) @db.Timestamptz(6)
+  profiles           profiles  @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "streaks_user_fk")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model water_entries {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String
+  local_date DateTime @db.Date
+  amount_ml  Int
+  logged_at  DateTime @default(now()) @db.Timestamptz(6)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  profiles   profiles @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "water_entries_user_fk")
+
+  @@index([user_id, local_date], map: "idx_water_entries_user_date")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model workouts {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String
+  local_date   DateTime @db.Date
+  workout      String
+  duration_min Int
+  notes        String?
+  logged_at    DateTime @default(now()) @db.Timestamptz(6)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  profiles     profiles @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "workouts_user_fk")
+
+  @@index([user_id, local_date], map: "idx_workouts_user_date")
+}

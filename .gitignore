@@ -1,0 +1,45 @@
+# Monorepo (Node / TS)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.tsbuildinfo
+
+# Local env / secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+
+# Next.js (apps/web)
+.next/
+out/
+.vercel/
+next-env.d.ts
+
+# Expo / React Native (apps/mobile)
+.expo/
+dist/
+web-build/
+.metro-health-check*
+expo-env.d.ts
+/ios
+/android
+*.jks
+*.mobileprovision
+*.p8
+*.p12
+*.key
+
+# Nest / Node build outputs (apps/api)
+dist/
+
+# Prisma generated client (if you prefer generating locally rather than committing)
+apps/api/src/generated/prisma/
+
+
