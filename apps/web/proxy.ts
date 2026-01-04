@@ -1,9 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-
+import { NextResponse } from "next/server";
 const isPublicRoute = createRouteMatcher(["/", "/health(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) await auth.protect();
+  if (!isPublicRoute(req)) {
+    const result = await auth.protect();
+    if (result instanceof Response) return result;
+  }
+  return NextResponse.next();
 });
 
 export const config = {
@@ -14,5 +18,3 @@ export const config = {
     "/(api|trpc)(.*)",
   ],
 };
-
-
