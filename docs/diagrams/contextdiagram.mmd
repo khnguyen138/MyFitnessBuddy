@@ -1,0 +1,14 @@
+C4Context
+    title System Context Diagram - MyFitnessFriend
+
+    Person(user, "User", "Tracks meals, water, workouts, and views progress")
+
+    System(mff, "MyFitnessFriend", "Fitness & nutrition tracking platform for web and mobile")
+
+    System_Ext(clerk, "Clerk", "Google OAuth identity provider, JWT issuance")
+    System_Ext(foodApi, "Food Database API", "External food/nutrition data (e.g., Edamam)")
+
+    Rel(user, mff, "Logs meals, water, workouts; views diary & streaks")
+    Rel(mff, clerk, "Validates JWT tokens, retrieves user identity")
+    Rel(mff, foodApi, "Searches foods, resolves barcodes")
+    Rel(user, clerk, "Authenticates via Google OAuth")

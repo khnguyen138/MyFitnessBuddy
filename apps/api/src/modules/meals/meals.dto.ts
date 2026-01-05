@@ -1,6 +1,7 @@
 import { Type } from "class-transformer";
 import {
   IsEnum,
+  IsISO8601,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -20,10 +21,17 @@ export enum MealType {
 
 export class CreateMealEntryDto {
   @IsString()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    message: "local_date must be YYYY-MM-DD",
-  })
-  local_date!: string;
+  @IsISO8601(
+    { strict: true },
+    { message: "logged_at must be a valid ISO 8601 datetime" }
+  )
+  logged_at!: string;
+
+  // Deprecated: server derives local_date from logged_at + profile timezone.
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: "local_date must be YYYY-MM-DD" })
+  local_date?: string;
 
   @IsEnum(MealType)
   meal!: MealType;
@@ -74,9 +82,16 @@ export class CreateMealEntryDto {
 export class UpdateMealEntryDto {
   @IsOptional()
   @IsString()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    message: "local_date must be YYYY-MM-DD",
-  })
+  @IsISO8601(
+    { strict: true },
+    { message: "logged_at must be a valid ISO 8601 datetime" }
+  )
+  logged_at?: string;
+
+  // Deprecated: server derives local_date from logged_at + profile timezone.
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: "local_date must be YYYY-MM-DD" })
   local_date?: string;
 
   @IsOptional()

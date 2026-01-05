@@ -19,6 +19,9 @@ function createMockPrisma() {
       create: async (_args: any) => ({}),
       update: async (_args: any) => ({}),
     },
+    streak_credits: {
+      create: async (_args: any) => ({}),
+    },
   };
   return mock;
 }

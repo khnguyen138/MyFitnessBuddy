@@ -1,0 +1,94 @@
+erDiagram
+    profiles {
+        string user_id PK "Clerk user ID"
+        string display_name
+        string timezone "IANA timezone, default UTC"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    goals {
+        string user_id PK,FK "FK → profiles.user_id"
+        int calorie_goal
+        int water_goal_ml
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    foods {
+        uuid id PK
+        string user_id FK "FK → profiles.user_id, NULL = API food"
+        string source "api | custom | barcode"
+        string external_id "API food ID or barcode"
+        string label
+        string brand
+        string serving_unit
+        decimal serving_quantity
+        decimal kcal
+        decimal protein_g
+        decimal carbs_g
+        decimal fat_g
+        timestamptz created_at
+    }
+
+    meal_entries {
+        uuid id PK
+        string user_id FK "FK → profiles.user_id"
+        date local_date "User's local calendar date"
+        string meal "breakfast | lunch | dinner | snack"
+        uuid food_id FK "FK → foods.id, nullable"
+        string label_snapshot "Preserved food name"
+        decimal serving_quantity
+        string serving_unit
+        decimal kcal
+        decimal protein_g
+        decimal carbs_g
+        decimal fat_g
+        timestamptz logged_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    water_entries {
+        uuid id PK
+        string user_id FK "FK → profiles.user_id"
+        date local_date "User's local calendar date"
+        int amount_ml
+        timestamptz logged_at
+        timestamptz created_at
+    }
+
+    workouts {
+        uuid id PK
+        string user_id FK "FK → profiles.user_id"
+        date local_date "User's local calendar date"
+        string workout "push | pull | legs | cardio | other"
+        int duration_min
+        string notes
+        timestamptz logged_at
+        timestamptz created_at
+    }
+
+    streak_credits {
+        uuid id PK
+        string user_id FK "FK → profiles.user_id"
+        date local_date UK "Unique per user+date"
+        timestamptz credited_at "When streak was credited"
+    }
+
+    streaks {
+        string user_id PK,FK "FK → profiles.user_id"
+        int current_streak
+        int best_streak
+        date last_credited_date
+        timestamptz updated_at
+    }
+
+    profiles ||--o| goals : "has"
+    profiles ||--o| streaks : "has"
+    profiles ||--o{ foods : "owns custom"
+    profiles ||--o{ meal_entries : "logs"
+    profiles ||--o{ water_entries : "logs"
+    profiles ||--o{ workouts : "logs"
+    profiles ||--o{ streak_credits : "earns"
+    foods ||--o{ meal_entries : "referenced by"

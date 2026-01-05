@@ -6,7 +6,7 @@ import request from "supertest";
 import { PrismaService } from "../../src/prisma/index.js";
 import { createTestApp } from "../helpers/create-test-app.js";
 
-test("Meals API E2E workflow: POST -> GET -> PATCH -> DELETE", async (t) => {
+test("Water API E2E workflow: POST -> GET -> DELETE", async (t) => {
   if (!process.env.DATABASE_URL) {
     t.skip("DATABASE_URL is not set; skipping e2e test");
     return;
@@ -18,28 +18,10 @@ test("Meals API E2E workflow: POST -> GET -> PATCH -> DELETE", async (t) => {
   const { app, moduleRef, userId } = await createTestApp();
   const prisma = moduleRef.get(PrismaService);
 
-  const hasTimezoneColumn = await prisma.$queryRaw<Array<{ exists: boolean }>>`
-    select exists (
-      select 1
-      from information_schema.columns
-      where table_schema = 'public'
-        and table_name = 'profiles'
-        and column_name = 'timezone'
-    ) as "exists"
-  `
-    .then((rows) => rows[0]?.exists === true)
-    .catch(() => false);
-  if (!hasTimezoneColumn) {
-    t.skip(
-      "DB schema is missing profiles.timezone; run the Supabase SQL migration for Change 2"
-    );
-    return;
-  }
-
   const date = "2026-01-04";
   const authHeader = { "x-test-user-id": userId };
 
-  // Ensure FK requirements are satisfied (meal_entries.user_id -> profiles.user_id)
+  // Ensure FK requirements are satisfied (water_entries.user_id -> profiles.user_id)
   await prisma.profiles.upsert({
     where: { user_id: userId },
     update: {},
@@ -47,9 +29,7 @@ test("Meals API E2E workflow: POST -> GET -> PATCH -> DELETE", async (t) => {
   });
 
   t.after(async () => {
-    // Clean up anything created during the test for this user.
-    await prisma.meal_entries.deleteMany({ where: { user_id: userId } });
-    await prisma.streak_credits.deleteMany({ where: { user_id: userId } });
+    await prisma.water_entries.deleteMany({ where: { user_id: userId } });
     await prisma.streaks.deleteMany({ where: { user_id: userId } });
     await prisma.goals.deleteMany({ where: { user_id: userId } });
     await prisma.profiles.deleteMany({ where: { user_id: userId } });
@@ -58,30 +38,20 @@ test("Meals API E2E workflow: POST -> GET -> PATCH -> DELETE", async (t) => {
     else process.env.AUTH_BYPASS = prevBypass;
   });
 
-  // 1) POST /meals
   const created = await request(app.getHttpServer())
-    .post("/meals")
+    .post("/water")
     .set(authHeader)
-    .send({
-      logged_at: `${date}T12:00:00.000Z`,
-      meal: "lunch",
-      label_snapshot: "Chicken Salad",
-      serving_quantity: 1,
-      kcal: 350,
-    })
+    .send({ local_date: date, amount_ml: 250 })
     .expect(201)
     .then((r: any) => r.body);
 
   assert.equal(created.user_id, userId);
-  assert.equal(created.meal, "lunch");
-  assert.equal(created.label_snapshot, "Chicken Salad");
+  assert.equal(created.amount_ml, 250);
   assert.ok(created.id);
-
   const createdId = created.id as string;
 
-  // 2) GET /meals?date=YYYY-MM-DD
   const list = await request(app.getHttpServer())
-    .get(`/meals?date=${date}`)
+    .get(`/water?date=${date}`)
     .set(authHeader)
     .expect(200)
     .then((r: any) => r.body);
@@ -90,31 +60,16 @@ test("Meals API E2E workflow: POST -> GET -> PATCH -> DELETE", async (t) => {
   assert.equal(list.length, 1);
   assert.equal(list[0].id, createdId);
 
-  // 3) PATCH /meals/:id
-  const updated = await request(app.getHttpServer())
-    .patch(`/meals/${createdId}`)
-    .set(authHeader)
-    .send({ label_snapshot: "Chicken Salad (updated)", kcal: 400 })
-    .expect(200)
-    .then((r: any) => r.body);
-
-  assert.equal(updated.id, createdId);
-  assert.equal(updated.label_snapshot, "Chicken Salad (updated)");
-  // prisma Decimal serializes as string in JSON
-  assert.equal(updated.kcal, "400");
-
-  // 4) DELETE /meals/:id
   const del = await request(app.getHttpServer())
-    .delete(`/meals/${createdId}`)
+    .delete(`/water/${createdId}`)
     .set(authHeader)
     .expect(200)
     .then((r: any) => r.body);
 
   assert.deepEqual(del, { deleted: true });
 
-  // 5) GET again -> empty
   const listAfter = await request(app.getHttpServer())
-    .get(`/meals?date=${date}`)
+    .get(`/water?date=${date}`)
     .set(authHeader)
     .expect(200)
     .then((r: any) => r.body);
@@ -122,3 +77,5 @@ test("Meals API E2E workflow: POST -> GET -> PATCH -> DELETE", async (t) => {
   assert.ok(Array.isArray(listAfter));
   assert.equal(listAfter.length, 0);
 });
+
+

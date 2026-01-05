@@ -23,6 +23,9 @@ model foods {
   fat_g            Decimal?       @db.Decimal
   created_at       DateTime?      @default(now()) @db.Timestamptz(6)
   meal_entries     meal_entries[]
+
+  @@index([source, external_id], map: "idx_foods_source_external")
+  @@index([user_id, label], map: "idx_foods_user_label")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -63,13 +66,27 @@ model meal_entries {
 model profiles {
   user_id       String          @id
   display_name  String?
+  timezone      String          @default("UTC") @db.Text
   created_at    DateTime        @default(now()) @db.Timestamptz(6)
   updated_at    DateTime?       @default(now()) @db.Timestamptz(6)
   goals         goals?
   meal_entries  meal_entries[]
   streaks       streaks?
+  streak_credits streak_credits[]
   water_entries water_entries[]
   workouts      workouts[]
+}
+
+/// Persisted streak credits (one per user per local calendar day). This record must survive meal edits/deletes.
+model streak_credits {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String
+  local_date  DateTime  @db.Date
+  credited_at DateTime  @default(now()) @db.Timestamptz(6)
+  profiles    profiles  @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "streak_credits_user_fk")
+
+  @@unique([user_id, local_date], map: "uq_streak_credits_user_date")
+  @@index([user_id, local_date], map: "idx_streak_credits_user_date")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

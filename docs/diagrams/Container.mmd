@@ -1,0 +1,24 @@
+C4Container
+    title Container Diagram - MyFitnessFriend
+
+    Person(user, "User", "Fitness tracker user")
+
+    System_Boundary(mff, "MyFitnessFriend") {
+        Container(web, "Web App", "Next.js App Router", "Browser-based UI for diary, food search, history")
+        Container(mobile, "Mobile App", "Expo React Native", "iOS/Android app with barcode scanner")
+        Container(api, "API Server", "NestJS REST", "Business logic, auth validation, data access")
+        ContainerDb(db, "Database", "Supabase Postgres", "Stores profiles, foods, entries, streaks")
+    }
+
+    System_Ext(clerk, "Clerk", "OAuth & JWT provider")
+    System_Ext(foodApi, "Food Database API", "Edamam or similar")
+
+    Rel(user, web, "Uses", "HTTPS")
+    Rel(user, mobile, "Uses", "HTTPS")
+    Rel(web, clerk, "Gets session token", "Clerk SDK")
+    Rel(mobile, clerk, "Gets session token", "Clerk Expo SDK")
+    Rel(web, api, "API calls with JWT", "HTTPS/REST")
+    Rel(mobile, api, "API calls with JWT", "HTTPS/REST")
+    Rel(api, clerk, "Validates JWT", "JWKS")
+    Rel(api, db, "Reads/writes data", "Prisma/SQL")
+    Rel(api, foodApi, "Food search, barcode lookup", "HTTPS")
