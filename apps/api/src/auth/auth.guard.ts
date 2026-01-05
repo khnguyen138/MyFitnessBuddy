@@ -20,6 +20,18 @@ export class ClerkAuthGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest<RequestWithAuth>();
 
+    // Test-only bypass (E2E): lets automated tests run without a real Clerk JWT.
+    // Enable by setting AUTH_BYPASS=true and passing x-test-user-id header.
+    if (process.env.AUTH_BYPASS === "true") {
+      const header = req.headers["x-test-user-id"];
+      const userId = Array.isArray(header) ? header[0] : header;
+      if (!userId) {
+        throw new UnauthorizedException("Missing x-test-user-id header");
+      }
+      req.auth = { userId, claims: {} as any };
+      return true;
+    }
+
     const authHeader = req.headers["authorization"];
     if (!authHeader)
       throw new UnauthorizedException("Missing Authorization header");
