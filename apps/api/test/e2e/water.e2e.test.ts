@@ -77,5 +77,3 @@ test("Water API E2E workflow: POST -> GET -> DELETE", async (t) => {
   assert.ok(Array.isArray(listAfter));
   assert.equal(listAfter.length, 0);
 });
-
-

@@ -8,21 +8,16 @@ import {
   Patch,
   Post,
   Query,
-  UnauthorizedException,
 } from "@nestjs/common";
 
 import { UserId } from "../../auth/index.js";
+import { requireUserId } from "../../shared/http/require-user-id.js";
 import {
   CreateMealEntryDto,
   MealsByDateQueryDto,
   UpdateMealEntryDto,
 } from "./meals.dto.js";
 import { MealsService } from "./meals.service.js";
-
-function requireUserId(userId: string | undefined): string {
-  if (!userId) throw new UnauthorizedException();
-  return userId;
-}
 
 @Controller("meals")
 export class MealsController {

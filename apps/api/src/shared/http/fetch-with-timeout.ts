@@ -15,5 +15,3 @@ export const executeFetchWithTimeout = async (
     clearTimeout(timeoutId);
   }
 };
-
-

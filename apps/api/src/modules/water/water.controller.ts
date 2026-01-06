@@ -7,17 +7,12 @@ import {
   Param,
   Post,
   Query,
-  UnauthorizedException,
 } from "@nestjs/common";
 
 import { UserId } from "../../auth/index.js";
+import { requireUserId } from "../../shared/http/require-user-id.js";
 import { CreateWaterEntryDto, WaterByDateQueryDto } from "./water.dto.js";
 import { WaterService } from "./water.service.js";
-
-function requireUserId(userId: string | undefined): string {
-  if (!userId) throw new UnauthorizedException();
-  return userId;
-}
 
 @Controller("water")
 export class WaterController {

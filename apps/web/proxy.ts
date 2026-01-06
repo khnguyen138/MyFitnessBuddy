@@ -4,8 +4,7 @@ const isPublicRoute = createRouteMatcher(["/", "/health(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
-    const result = await auth.protect();
-    if (result instanceof Response) return result;
+    await auth.protect();
   }
   return NextResponse.next();
 });

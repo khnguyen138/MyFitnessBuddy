@@ -5,21 +5,9 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../../prisma/index.js";
+import { parseDateOnlyYYYYMMDD } from "../../shared/date/parse-date-only-yyyy-mm-dd.js";
 import type { Prisma } from "../../generated/prisma/client.js";
 import type { CreateMealEntryDto, UpdateMealEntryDto } from "./meals.dto.js";
-
-function parseDateOnlyYYYYMMDD(value: string): Date {
-  // Interpret as UTC midnight to avoid local timezone shifting the date.
-  // (DB column is DATE, so time-of-day is irrelevant.)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new BadRequestException("Date must be YYYY-MM-DD");
-  }
-  const d = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(d.getTime())) {
-    throw new BadRequestException("Invalid date");
-  }
-  return d;
-}
 
 function parseInstantISO(value: string): Date {
   const d = new Date(value);
@@ -82,7 +70,7 @@ export class MealsService {
       const profile = await tx.profiles.upsert({
         where: { user_id: userId },
         update: { updated_at: new Date() },
-        create: { user_id: userId },
+        create: { user_id: userId, timezone: "UTC" },
         select: { timezone: true },
       });
       const timeZone = requireValidTimeZone(profile.timezone);
@@ -239,21 +227,20 @@ export class MealsService {
     userId: string,
     localDate: Date
   ): Promise<boolean> {
-    try {
-      await tx.streak_credits.create({
-        data: {
+    // IMPORTANT: do not rely on catching unique violations in an interactive transaction.
+    // In Postgres, a constraint error aborts the transaction even if you catch it in JS.
+    // Use ON CONFLICT DO NOTHING semantics instead.
+    const result = await tx.streak_credits.createMany({
+      data: [
+        {
           user_id: userId,
           local_date: localDate,
           credited_at: new Date(),
         },
-      });
-      return true;
-    } catch (err: unknown) {
-      const prismaError = err as { code?: string };
-      // Unique violation (user_id, local_date) => already credited; idempotent no-op.
-      if (prismaError.code === "P2002") return false;
-      throw err;
-    }
+      ],
+      skipDuplicates: true,
+    });
+    return result.count === 1;
   }
 
   private async getUserLocalDateFromLoggedAt(

@@ -42,8 +42,8 @@ test("Meals API E2E workflow: POST -> GET -> PATCH -> DELETE", async (t) => {
   // Ensure FK requirements are satisfied (meal_entries.user_id -> profiles.user_id)
   await prisma.profiles.upsert({
     where: { user_id: userId },
-    update: {},
-    create: { user_id: userId },
+    update: { timezone: "UTC" },
+    create: { user_id: userId, timezone: "UTC" },
   });
 
   t.after(async () => {

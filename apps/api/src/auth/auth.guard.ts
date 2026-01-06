@@ -47,17 +47,17 @@ export class ClerkAuthGuard implements CanActivate {
     const secretKey = process.env.CLERK_SECRET_KEY;
     if (!secretKey) throw new Error("CLERK_SECRET_KEY is missing");
 
+    let claims: unknown;
     try {
-      const claims = await verifyToken(token, { secretKey });
-      const userId = (claims as any).sub as string | undefined; // Clerk userId is typically in `sub`
-
-      if (!userId)
-        throw new UnauthorizedException("Invalid token (missing sub)");
-
-      req.auth = { userId, claims: claims as any };
-      return true;
+      claims = await verifyToken(token, { secretKey });
     } catch {
       throw new UnauthorizedException("Invalid or expired token");
     }
+
+    const userId = (claims as any).sub as string | undefined; // Clerk userId is typically in `sub`
+    if (!userId) throw new UnauthorizedException("Invalid token (missing sub)");
+
+    req.auth = { userId, claims: claims as any };
+    return true;
   }
 }

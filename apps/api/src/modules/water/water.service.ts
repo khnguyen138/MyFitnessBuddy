@@ -1,23 +1,8 @@
-import {
-  BadRequestException,
-  Injectable,
-  Inject,
-  NotFoundException,
-} from "@nestjs/common";
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
 
 import { PrismaService } from "../../prisma/index.js";
+import { parseDateOnlyYYYYMMDD } from "../../shared/date/parse-date-only-yyyy-mm-dd.js";
 import type { CreateWaterEntryDto } from "./water.dto.js";
-
-function parseDateOnlyYYYYMMDD(value: string): Date {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new BadRequestException("Date must be YYYY-MM-DD");
-  }
-  const d = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(d.getTime())) {
-    throw new BadRequestException("Invalid date");
-  }
-  return d;
-}
 
 @Injectable()
 export class WaterService {
